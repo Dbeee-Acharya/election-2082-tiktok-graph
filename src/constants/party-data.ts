@@ -50,7 +50,7 @@ export const PARTIES: Party[] = [
   },
   {
     abbreviation: "SSP",
-    fullName: "Samajwadi Party Nepal",
+    fullName: "Shram Sanskriti Party",
     logo_url:
       "https://assets-generalelection2082.ekantipur.com/parties/party-1770793904.png",
     color: "#792351",

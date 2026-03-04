@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { createFileRoute } from "@tanstack/react-router";
-import { PARTIES, type Party } from "../constants/party-data";
 
 // NOTE: credentials are visible in the JS bundle — this is a basic deterrent only
 const CREDENTIALS = {
@@ -28,15 +27,59 @@ function useAuth() {
   return { authed, login };
 }
 
-const DUMMY_RESULTS: Record<string, number> = {
-  NC: 80,
-  UML: 87,
-  NCP: 34,
-  RSP: 21,
-  RPP: 14,
-  UNP: 8,
-  SSP: 5,
+type ApiParty = {
+  id: number;
+  party_name: string;
+  color: string;
+  flag: string;
+  win: number;
+  lead: number;
 };
+
+const ABBR: Record<number, string> = {
+  1: "UML",
+  2: "NC",
+  3: "RPP",
+  7: "RSP",
+  9: "NCP",
+  11: "SSP",
+  13: "UNP",
+};
+
+function useElectionData() {
+  const [parties, setParties] = useState<ApiParty[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_KMG_API_BASE_URL}/api/getpopularpartydata`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_KMG_API_TOKEN}`,
+          },
+        },
+      );
+      const json = await res.json();
+      if (json.status === 200) {
+        setParties(json.data.result);
+      }
+    } catch {
+      // keep previous data on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 3 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return { parties, loading };
+}
 
 export const Route = createFileRoute("/")({ component: App });
 
@@ -118,12 +161,13 @@ function LoginScreen({
 }
 
 function Dashboard() {
-  const results = PARTIES.map((p) => ({
-    ...p,
-    seats: DUMMY_RESULTS[p.abbreviation] ?? 0,
-  })).sort((a, b) => b.seats - a.seats);
+  const { parties, loading } = useElectionData();
 
-  const maxSeats = results[0]?.seats ?? 1;
+  const sorted = [...parties].sort((a, b) => b.lead - a.lead);
+  const maxLead = Math.max(sorted[0]?.lead ?? 0, 1);
+  const winners = [...parties]
+    .filter((p) => p.win > 0)
+    .sort((a, b) => b.win - a.win);
 
   return (
     <main className="min-h-dvh bg-[#0b0b0e] text-white flex justify-center px-4 py-6">
@@ -156,28 +200,64 @@ function Dashboard() {
           </p>
         </div>
 
-        {/* Bar Chart */}
-        <div className="flex flex-col gap-6">
-          {results.map((party, i) => (
-            <motion.div
-              key={party.abbreviation}
-              layout
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-            >
-              <ResultRow
-                party={party}
-                seats={party.seats}
-                maxSeats={maxSeats}
-                rank={i + 1}
-                isMajority={party.seats >= 83}
-              />
-            </motion.div>
-          ))}
-        </div>
+        {loading && parties.length === 0 ? (
+          <div className="flex justify-center py-16 text-white/20 text-sm">
+            Loading…
+          </div>
+        ) : (
+          <>
+            {/* Bar Chart — leading */}
+            <div className="flex flex-col gap-6">
+              {sorted.map((party, i) => (
+                <motion.div
+                  key={party.id}
+                  layout
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                >
+                  <ResultRow
+                    party={party}
+                    seats={party.lead}
+                    maxSeats={maxLead}
+                    rank={i + 1}
+                    isMajority={party.lead >= 83}
+                  />
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Wins section */}
+            {winners.length > 0 && (
+              <div className="flex flex-col gap-3 pt-2 border-t border-white/[0.06]">
+                <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest">
+                  Won
+                </p>
+                <div className="flex flex-col gap-2.5">
+                  {winners.map((party) => (
+                    <div key={party.id} className="flex items-center gap-3">
+                      <div className="w-6 h-6 shrink-0 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/[0.08]">
+                        <img
+                          src={party.flag}
+                          alt={party.party_name.trim()}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <span className="text-sm text-white/50 flex-1">
+                        {party.party_name.trim()}
+                      </span>
+                      <span className="text-sm font-bold text-white tabular-nums">
+                        {party.win}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Footer */}
         <p className="text-center text-white/15 text-[10px] pb-2">
-          Updates every 2 minutes· Ekantipur Election.
+          Updates every 3 minutes · Ekantipur Election.
         </p>
       </div>
     </main>
@@ -191,21 +271,22 @@ function ResultRow({
   rank,
   isMajority,
 }: {
-  party: Party;
+  party: ApiParty;
   seats: number;
   maxSeats: number;
   rank: number;
   isMajority: boolean;
 }) {
   const pct = (seats / maxSeats) * 100;
+  const abbr = ABBR[party.id] ?? party.party_name.trim().slice(0, 4);
 
   return (
     <div className="flex items-center gap-3">
       {/* Logo */}
       <div className="w-10 h-10 shrink-0 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/[0.08] flex items-center justify-center">
         <img
-          src={party.logo_url}
-          alt={party.abbreviation}
+          src={party.flag}
+          alt={abbr}
           className="w-full h-full object-contain"
           loading="eager"
         />
@@ -213,7 +294,7 @@ function ResultRow({
 
       {/* Abbreviation */}
       <span className="text-[14px] font-bold w-9 shrink-0 text-white/60 tracking-wide">
-        {party.abbreviation}
+        {abbr}
       </span>
 
       {/* Bar */}
