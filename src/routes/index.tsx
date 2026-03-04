@@ -40,19 +40,13 @@ function App() {
               Election Results 2082
             </h1>
             <p className="text-white/40 text-sm mt-0.5">
-              First-Past-The-Post · Constituencies Leading or Won
+              First-Past-The-Post · Constituencies Leading
             </p>
           </div>
         </div>
 
         {/* Majority indicator */}
         <div className="flex items-center gap-3 bg-white/[0.03] rounded-xl px-4 py-3 border border-white/5">
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-white/90">83</span>
-            <span className="text-[10px] text-white/30 uppercase tracking-wider">
-              Majority
-            </span>
-          </div>
           <div className="h-8 w-px bg-white/10" />
           <p className="text-xs text-white/40 leading-relaxed">
             A party needs{" "}
