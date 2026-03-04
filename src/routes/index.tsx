@@ -191,7 +191,7 @@ function Dashboard() {
         </div>
 
         {/* Majority indicator */}
-        <div className="flex items-center gap-3 bg-white/[0.03] mb-4 mt-2 rounded-xl px-4 py-3 border border-white/5">
+        <div className="flex items-center gap-3 bg-white/[0.03] rounded-xl px-3 py-3 border border-white/5">
           <div className="h-8 w-px bg-white/10" />
           <p className="text-xs text-white/40 leading-relaxed">
             A party needs{" "}
