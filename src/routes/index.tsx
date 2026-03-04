@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { createFileRoute } from "@tanstack/react-router";
 import { PARTIES, type Party } from "../constants/party-data";
 
@@ -28,16 +29,14 @@ function useAuth() {
 }
 
 const DUMMY_RESULTS: Record<string, number> = {
-  NC: 89,
-  UML: 78,
+  NC: 80,
+  UML: 87,
   NCP: 34,
   RSP: 21,
   RPP: 14,
   UNP: 8,
   SSP: 5,
 };
-
-const TOTAL_SEATS = 165;
 
 export const Route = createFileRoute("/")({ component: App });
 
@@ -125,7 +124,6 @@ function Dashboard() {
   })).sort((a, b) => b.seats - a.seats);
 
   const maxSeats = results[0]?.seats ?? 1;
-  const totalDeclared = results.reduce((s, r) => s + r.seats, 0);
 
   return (
     <main className="min-h-dvh bg-[#0b0b0e] text-white flex justify-center px-4 py-6">
@@ -149,7 +147,7 @@ function Dashboard() {
         </div>
 
         {/* Majority indicator */}
-        <div className="flex items-center gap-3 bg-white/[0.03] rounded-xl px-4 py-3 border border-white/5">
+        <div className="flex items-center gap-3 bg-white/[0.03] mb-4 mt-2 rounded-xl px-4 py-3 border border-white/5">
           <div className="h-8 w-px bg-white/10" />
           <p className="text-xs text-white/40 leading-relaxed">
             A party needs{" "}
@@ -161,14 +159,19 @@ function Dashboard() {
         {/* Bar Chart */}
         <div className="flex flex-col gap-6">
           {results.map((party, i) => (
-            <ResultRow
+            <motion.div
               key={party.abbreviation}
-              party={party}
-              seats={party.seats}
-              maxSeats={maxSeats}
-              rank={i + 1}
-              isMajority={party.seats >= 83}
-            />
+              layout
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
+              <ResultRow
+                party={party}
+                seats={party.seats}
+                maxSeats={maxSeats}
+                rank={i + 1}
+                isMajority={party.seats >= 83}
+              />
+            </motion.div>
           ))}
         </div>
 
@@ -218,28 +221,32 @@ function ResultRow({
         {/* Track */}
         <div className="absolute inset-0 rounded-md bg-white/[0.04]" />
         {/* Fill */}
-        <div
+        <motion.div
           className="absolute inset-y-0 left-0 rounded-md"
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           style={{
-            width: `${pct}%`,
             backgroundColor: party.color,
             boxShadow: `0 0 16px ${party.color}33`,
           }}
         />
         {/* Top shine */}
-        <div
+        <motion.div
           className="absolute inset-y-0 left-0 rounded-lg pointer-events-none overflow-hidden"
-          style={{ width: `${pct}%` }}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent rounded-t-lg" />
-        </div>
+        </motion.div>
         {/* Majority badge inside bar */}
         {isMajority && (
           <div
             className="absolute right-2 inset-y-0 flex items-center"
             style={{ mixBlendMode: "overlay" }}
           >
-            <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">
+            <span className="text-[9px] font-bold text-white uppercase tracking-widest">
               Majority
             </span>
           </div>
