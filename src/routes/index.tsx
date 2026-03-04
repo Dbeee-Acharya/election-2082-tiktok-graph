@@ -56,7 +56,7 @@ function App() {
         </div>
 
         {/* Bar Chart */}
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-6">
           {results.map((party, i) => (
             <ResultRow
               key={party.abbreviation}
