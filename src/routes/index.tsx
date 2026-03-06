@@ -194,9 +194,7 @@ function Dashboard() {
         <div className="flex items-center gap-3 bg-white/[0.03] rounded-xl px-3 py-3 border border-white/5">
           <div className="h-8 w-px bg-white/10" />
           <p className="text-xs text-white/40 leading-relaxed">
-            A party needs{" "}
-            <span className="text-white/70 font-medium">83 seats</span> to form
-            a majority government in the FPTP election.
+            Nepal Election 2082 lead status
           </p>
         </div>
 
